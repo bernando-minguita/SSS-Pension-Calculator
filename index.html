@@ -275,9 +275,15 @@
                 <div id="summaryContainer" class="bg-sss-cardbg border border-sss-border rounded-2xl p-5 sm:p-6 text-slate-800 space-y-5 shadow-sm">
                     
                     <div class="flex items-center justify-between border-b border-blue-200/80 pb-3">
-                        <span class="text-xs font-bold text-sss-blue uppercase tracking-wider flex items-center gap-2">
-                            SUMMARY INFORMATION
-                        </span>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-bold text-sss-blue uppercase tracking-wider">
+                                SUMMARY INFORMATION
+                            </span>
+                            <button type="button" id="infoBtn" onclick="openInfoModal()" title="Basis of computation" aria-label="Basis of computation"
+                                class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-sss-blue/10 text-sss-blue hover:bg-sss-blue hover:text-white transition-colors text-[11px] leading-none">
+                                <i class="fa-solid fa-circle-info"></i>
+                            </button>
+                        </div>
                         <i class="fa-solid fa-chevron-up text-sss-blue text-xs"></i>
                     </div>
 
@@ -329,6 +335,36 @@
         <input type="hidden" id="cys" value="15">
 
     </main>
+
+    <!-- Basis of Computation Modal -->
+    <div id="infoModal" class="hidden fixed inset-0 z-50 items-center justify-center p-4">
+        <div class="absolute inset-0 bg-slate-900/60" onclick="closeInfoModal()"></div>
+        <div class="relative w-full max-w-3xl max-h-[85vh] overflow-y-auto bg-sss-light border border-sss-border rounded-2xl shadow-xl p-6 sm:p-8">
+            <button type="button" id="infoModalClose" aria-label="Close"
+                class="absolute top-4 right-4 w-8 h-8 rounded-full bg-white border border-sss-border text-slate-500 hover:text-sss-navy hover:border-sss-navy flex items-center justify-center transition-colors">
+                <i class="fa-solid fa-xmark text-sm"></i>
+            </button>
+            <h3 class="text-center text-lg font-bold text-sss-blue underline decoration-2 underline-offset-4 mb-6">Basis of computation</h3>
+            <div class="grid md:grid-cols-2 gap-x-8 gap-y-2 text-sm text-sss-navy leading-relaxed">
+                <ul class="space-y-3 list-disc pl-5 marker:text-sss-blue">
+                    <li>Contribution rate for mandatory programs is 15%</li>
+                    <li>Contribution amount is fixed with no payment gaps until earliest retirement age (at least age 60)</li>
+                    <li>Additional benefit allowance of ₱1,000 per month and 13th month pensions under the Regular SSS Program are included</li>
+                    <li>Pension for the Regular SSS program is for life</li>
+                </ul>
+                <ul class="space-y-3 list-disc pl-5 marker:text-sss-blue">
+                    <li>For Pension Booster programs:
+                        <ul class="mt-2 space-y-2 list-disc pl-5 marker:text-sss-blue text-slate-600">
+                            <li>Return-on-Investment (ROI) rate is 6%</li>
+                            <li>Management Fee (MF) rate is 1% per annum</li>
+                            <li>Pension period is fixed at 15 years</li>
+                            <li>Monthly pension includes interest earning during the pension period, for illustration purposes</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
 
     <!-- JAVASCRIPT COMPUTATION ENGINE -->
     <script>
@@ -387,9 +423,28 @@
 
             document.getElementById('ageNum').addEventListener('change', calculateSSS);
 
+            // Basis of computation info modal
+            document.getElementById('infoBtn').addEventListener('click', openInfoModal);
+            document.getElementById('infoModalClose').addEventListener('click', closeInfoModal);
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') closeInfoModal();
+            });
+
             // Initial calculation on page load
             calculateSSSNow();
         });
+
+        function openInfoModal() {
+            const modal = document.getElementById('infoModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeInfoModal() {
+            const modal = document.getElementById('infoModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
 
         function updateHeaders() {
             let cys = parseInt(document.getElementById('cys').value, 10) || 15;
@@ -524,9 +579,8 @@
                     setApiStatus(r.viaRelay ? 'relay' : 'live');
                 })
                 .catch(function (err) {
-                    console.warn('SSS calculate-planner unreachable (' + err + ') - using local computation engine');
-                    computeLocal(payload);
-                    setApiStatus('local');
+                    console.warn('SSS calculate-planner unreachable (' + err + ')');
+                    setApiStatus('error');
                 });
         }
 
@@ -631,108 +685,12 @@
             } else if (state === 'relay') {
                 el.textContent = '* Computed live via the official SSS API (serverless relay)';
                 el.className = 'font-semibold text-emerald-600';
-            } else {
-                el.textContent = '* SSS API blocked from this page - built-in computation used';
-                el.className = 'font-semibold text-amber-600';
+            } else if (state === 'error') {
+                el.textContent = '* Unable to reach the official SSS server - please try again';
+                el.className = 'font-semibold text-red-600';
             }
         }
 
-        // ------------------------------------------------------------
-        // LOCAL FALLBACK ENGINE - only used when the browser refuses the
-        // API response (CORS) and the /api/proxy relay is unavailable.
-        // Mirrors the official calculate-planner response fields.
-        // ------------------------------------------------------------
-        function computeLocal(payload) {
-            const monthlyIncome = payload.monthlyIncome;
-            const cys = 60 - payload.age;
-            document.getElementById('cys').value = cys;
-
-            const isTargetPensionMode = payload.desiredPension !== '';
-            const desiredPension = payload.desiredPension;
-            const volPenBoostContri = payload.volPenBoostContri;
-
-            // --- COMPUTATION RULES ---
-            
-            // Regular MSC capped at ₱20,000 for standard SS pension formula calculations
-            let regularMSC = Math.min(monthlyIncome, 20000);
-            // Mandatory WISP / MPB MSC (above ₱20,000 up to ₱30,000)
-            let wispMSC = Math.max(0, Math.min(monthlyIncome, 30000) - 20000);
-
-            // Base SSS Contribution (15% Total rate)
-            let ss_contri = regularMSC * 0.15;
-            let mpb_contri = wispMSC * 0.15;
-
-            // Base SSS Monthly Pension (Actuarial Formula + SSS Tier Benchmark)
-            let amsc = regularMSC;
-            let formula1 = 300 + (0.20 * amsc) + (0.02 * amsc * Math.max(0, cys - 10));
-            let formula2 = 0.40 * amsc;
-            let formula3 = cys >= 20 ? 2400 : 1200;
-            let computedBasePension = Math.max(formula1, formula2, formula3);
-
-            // SSS Official Pension Table benchmark mapping
-            let ssmonthlypen = computedBasePension;
-            if (monthlyIncome === 15000 && cys === 15) {
-                ssmonthlypen = 7000;
-            } else if (monthlyIncome === 15000 && cys === 18) {
-                ssmonthlypen = 7000;
-            } else if (monthlyIncome >= 20000) {
-                ssmonthlypen = Math.max(computedBasePension, 8000 + (cys - 10) * 200);
-            } else {
-                ssmonthlypen = Math.max(computedBasePension, (monthlyIncome * 0.45));
-            }
-
-            // Mandatory Provident Fund (MPB/WISP) Monthly Pension
-            let mpb_monthpen = (mpb_contri > 0) ? Math.round(mpb_contri * 1.5) : 0;
-
-            let vpb_contri2 = 0;
-            let vpb_monthpen = 0;
-
-            // SSS Pension Booster Actuarial Rate Scale
-            // Calibrated against API points: Age 45 (15 yrs -> 1546 for 3000), Age 42 (18 yrs -> 1187 for 3000)
-            const getBoosterContriRate = (years) => {
-                if (years <= 15) return 0.515333; // 1546 / 3000
-                if (years === 18) return 0.395666; // 1187 / 3000
-                // Exponential decay model for annuity factor
-                return 0.515333 * Math.pow(0.915, years - 15);
-            };
-
-            if (isTargetPensionMode) {
-                let shortfall = desiredPension - (ssmonthlypen + mpb_monthpen);
-                if (shortfall > 0) {
-                    vpb_monthpen = shortfall;
-                    let factor = getBoosterContriRate(cys);
-                    vpb_contri2 = Math.round(vpb_monthpen * factor);
-                } else {
-                    vpb_monthpen = 0;
-                    vpb_contri2 = 0;
-                }
-            } else {
-                vpb_contri2 = volPenBoostContri;
-                let factor = getBoosterContriRate(cys);
-                vpb_monthpen = Math.round(vpb_contri2 / factor);
-            }
-
-            let totalmonthpn = ssmonthlypen + mpb_monthpen + vpb_monthpen;
-            let totalmoncont = ss_contri + mpb_contri + vpb_contri2;
-            let totalamtcont = totalmoncont * 12 * cys;
-
-            // 15-Year Guaranteed Total Pension (Official Factor from SSS calculate-planner response: 1905308.88 / 10000 = 190.530888)
-            let totalpen15 = totalmonthpn * 190.530888;
-
-            populateResults({
-                ssmonthlypen: ssmonthlypen,
-                mpb_monthpen: mpb_monthpen,
-                vpb_monthpen: vpb_monthpen,
-                totalmonthpn: totalmonthpn,
-                ss_contri: ss_contri,
-                mpb_contri: mpb_contri,
-                vpb_contri2: vpb_contri2,
-                totalmoncont: totalmoncont,
-                totalamtcont: totalamtcont,
-                cys: cys,
-                totalpen15: totalpen15
-            });
-        }
     </script>
 </body>
 </html>
