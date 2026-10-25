@@ -64,7 +64,7 @@ the page never substitutes locally-computed figures.
 ```
 SSS/
 ├── index.html        # the entire frontend (HTML + Tailwind CDN + vanilla JS)
-├── api/
+└── api/
     └── proxy.py      # Vercel Python serverless relay for the SSS API
 ```
 
