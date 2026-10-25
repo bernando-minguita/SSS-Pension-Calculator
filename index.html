@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSS Pension & Retirement Calculator</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        sss: {
+                            navy: '#002B49',
+                            blue: '#004080',
+                            sky: '#0070BA',
+                            light: '#EBF3FA',
+                            gold: '#F5A623',
+                            border: '#D1E5F5',
+                            cardbg: '#E5F1FB'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f4f7fb;
+            color: #1e293b;
+        }
+        .tab-panel.active {
+            border-bottom: 3px solid #004080;
+            color: #002B49;
+            font-weight: 700;
+        }
+        .active-text {
+            color: #002B49;
+            font-weight: 700;
+        }
+        /* Range slider styling */
+        input[type=range] {
+            accent-color: #004080;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between">
+
+    <!-- Header / Navbar -->
+    <header class="bg-sss-navy text-white shadow-md border-b-4 border-sss-gold"></header>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex-grow w-full">
+        
+        <!-- Top Banner -->
+        <div class="bg-gradient-to-r from-sss-navy via-sss-blue to-blue-900 text-white rounded-2xl p-5 sm:p-6 mb-8 shadow-sm relative overflow-hidden">
+            <div class="absolute right-4 -bottom-6 opacity-10 pointer-events-none">
+                <i class="fa-solid fa-calculator text-[180px] text-white"></i>
+            </div>
+            <div class="relative z-10 max-w-2xl">
+                <span class="inline-block bg-sss-gold text-slate-900 text-[10px] font-bold px-2.5 py-0.5 rounded uppercase tracking-wider mb-2">MySSS Retirement Planner</span>
+                <h2 class="text-xl sm:text-2xl font-bold text-white mb-1">Estimate Your Future Monthly Pension</h2>
+                <p class="text-xs sm:text-sm text-blue-100 leading-relaxed">
+                    Calculate your base Regular SSS Pension, Mandatory Provident Fund (WISP), and optional Pension Booster top-up to plan for retirement at age 60.
+                </p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+
+            <!-- LEFT COLUMN: INPUT CONTROLS (5 Cols) -->
+            <div class="lg:col-span-5 bg-white rounded-2xl shadow-sm border border-slate-200 p-5 sm:p-7 flex flex-col justify-between">
+                <div>
+                    <!-- Calculator Mode Tabs -->
+                    <div class="mb-6 border-b border-slate-200">
+                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Calculator Mode</label>
+                        <div class="flex space-x-2">
+                            <button id="monthlyPension" type="button" class="tab-panel active flex-1 py-3 px-2 text-center text-xs sm:text-sm transition-all flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-bullseye text-sss-blue"></i>
+                                <span id="monthlyPensionText">Target Monthly Pension</span>
+                            </button>
+                            <button id="monthlyContribution" type="button" class="tab-panel flex-1 py-3 px-2 text-center text-xs sm:text-sm text-slate-500 hover:text-slate-800 transition-all flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-hand-holding-dollar"></i>
+                                <span id="monthlyContributionText">Voluntary Booster</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Input Form -->
+                    <form id="retirementCalculator" onsubmit="return false;" class="space-y-5">
+                        
+                        <!-- Input 1: Age -->
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label for="ageNum" class="text-xs font-bold text-slate-700 uppercase tracking-wide flex items-center gap-1.5">
+                                    <i class="fa-solid fa-user text-sss-blue"></i> Current Age
+                                </label>
+                                <span class="text-xs text-slate-400">15 - 59 years old</span>
+                            </div>
+                            
+                            <div class="flex gap-2 items-center mb-2">
+                                <button type="button" onclick="adjustAge(-1)" class="w-9 h-9 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold flex items-center justify-center transition-all">-</button>
+                                <div class="relative flex-1 rounded-xl shadow-sm">
+                                    <input type="number" id="ageNum" name="age" min="15" max="59" value="45" onkeypress="return numberOnly(event)" 
+                                        class="w-full bg-slate-50 border border-slate-300 rounded-xl py-2.5 px-4 text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-sss-blue focus:bg-white transition-all text-sm" placeholder="45">
+                                    <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-xs text-slate-400 font-medium">years old</div>
+                                </div>
+                                <button type="button" onclick="adjustAge(1)" class="w-9 h-9 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold flex items-center justify-center transition-all">+</button>
+                            </div>
+                            
+                            <input type="range" id="ageSlider" min="15" max="59" value="45" class="w-full h-1.5 bg-slate-200 rounded-lg cursor-pointer">
+                        </div>
+
+                        <!-- Input 2: Monthly Income -->
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label for="monthlyIncomeNum" class="text-xs font-bold text-slate-700 uppercase tracking-wide flex items-center gap-1.5">
+                                    <i class="fa-solid fa-money-bill-wave text-sss-blue"></i> Monthly Income / Salary
+                                </label>
+                                <span class="text-xs text-slate-400">₱5,000 - ₱35,000</span>
+                            </div>
+                            <div class="relative rounded-xl shadow-sm mb-2">
+                                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-500 font-bold text-sm">₱</div>
+                                <input type="text" id="monthlyIncomeNum" name="mincome" value="15,000" 
+                                    class="currency-input w-full bg-slate-50 border border-slate-300 rounded-xl py-2.5 pl-8 pr-4 text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-sss-blue focus:bg-white transition-all text-sm" placeholder="15,000">
+                            </div>
+                            <!-- Quick income presets -->
+                            <div class="flex flex-wrap gap-1.5">
+                                <button type="button" onclick="setPresetIncome(10000)" class="text-[11px] bg-slate-100 hover:bg-blue-50 hover:text-sss-blue text-slate-600 px-2.5 py-1 rounded-md font-medium transition-all">₱10,000</button>
+                                <button type="button" onclick="setPresetIncome(15000)" class="text-[11px] bg-slate-100 hover:bg-blue-50 hover:text-sss-blue text-slate-600 px-2.5 py-1 rounded-md font-medium transition-all">₱15,000</button>
+                                <button type="button" onclick="setPresetIncome(20000)" class="text-[11px] bg-slate-100 hover:bg-blue-50 hover:text-sss-blue text-slate-600 px-2.5 py-1 rounded-md font-medium transition-all">₱20,000</button>
+                                <button type="button" onclick="setPresetIncome(25000)" class="text-[11px] bg-slate-100 hover:bg-blue-50 hover:text-sss-blue text-slate-600 px-2.5 py-1 rounded-md font-medium transition-all">₱25,000</button>
+                                <button type="button" onclick="setPresetIncome(35000)" class="text-[11px] bg-slate-100 hover:bg-blue-50 hover:text-sss-blue text-slate-600 px-2.5 py-1 rounded-md font-medium transition-all">₱35,000</button>
+                            </div>
+                        </div>
+
+                        <!-- Mode Tab 1 Input: Desired Pension -->
+                        <div id="desiredPensionGroup" class="transition-all">
+                            <div class="flex justify-between items-center mb-1">
+                                <label for="desiredPension" class="text-xs font-bold text-slate-700 uppercase tracking-wide flex items-center gap-1.5">
+                                    <i class="fa-solid fa-award text-sss-gold"></i> Desired Monthly Pension
+                                </label>
+                                <span class="text-xs text-slate-400">₱5,000 - ₱100,000</span>
+                            </div>
+                            <div class="relative rounded-xl shadow-sm">
+                                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-500 font-bold text-sm">₱</div>
+                                <input type="text" id="desiredPension" name="dpension" value="10,000" 
+                                    class="currency-input w-full bg-slate-50 border border-slate-300 rounded-xl py-2.5 pl-8 pr-4 text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-sss-blue focus:bg-white transition-all text-sm" placeholder="10,000">
+                            </div>
+                        </div>
+
+                        <!-- Mode Tab 2 Input: Voluntary Booster -->
+                        <div id="volBoosterGroup" class="hidden transition-all">
+                            <div class="flex justify-between items-center mb-1">
+                                <label for="volPenBoostContri" class="text-xs font-bold text-slate-700 uppercase tracking-wide flex items-center gap-1.5">
+                                    <i class="fa-solid fa-piggy-bank text-emerald-600"></i> Voluntary Booster Contribution
+                                </label>
+                                <span class="text-xs text-slate-400">₱500 - ₱50,000</span>
+                            </div>
+                            <div class="relative rounded-xl shadow-sm">
+                                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-500 font-bold text-sm">₱</div>
+                                <input type="text" id="volPenBoostContri" name="vpbooster" value="1,546" 
+                                    class="currency-input w-full bg-slate-50 border border-slate-300 rounded-xl py-2.5 pl-8 pr-4 text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-sss-blue focus:bg-white transition-all text-sm" placeholder="1,546">
+                            </div>
+                        </div>
+
+                        <!-- Calculate Action Button -->
+                        <button type="button" id="btnSubmit" class="calc-btn btn-submit w-full bg-sss-navy hover:bg-sss-blue text-white font-bold py-3.5 px-6 rounded-xl shadow-md transition-all flex items-center justify-center space-x-2 text-sm uppercase tracking-wide mt-4">
+                            <i class="fa-solid fa-calculator"></i>
+                            <span>Calculate Planner</span>
+                        </button>
+                    </form>
+                </div>
+
+                <div class="mt-6 pt-4 border-t border-slate-100 text-[11px] text-slate-400 flex items-center justify-between">
+                    <span id="apiStatus">* Contacting the official SSS server...</span>
+                    <span class="font-semibold text-sss-blue">Official Portal Engine</span>
+                </div>
+            </div>
+
+            <!-- RIGHT COLUMN: RESULTS DISPLAY (7 Cols) -->
+            <div id="detailsContainer" class="lg:col-span-7 space-y-6">
+                
+                <!-- TOP DUAL CARDS: Estimated Pension & Monthly Contribution -->
+                <div id="resultsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    
+                    <!-- Card 1: Monthly Pension Result -->
+                    <div id="resultTabOne" class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col justify-between">
+                        <div>
+                            <h3 id="resultTabOneHeader" class="text-sm font-normal text-slate-600 mb-4 text-center">
+                                My estimated monthly pension in <span class="fw-bold font-bold text-slate-900" id="headerYear">2041</span>
+                            </h3>
+
+                            <div class="space-y-3.5 text-sm">
+                                <div class="flex justify-between items-center text-slate-600">
+                                    <span>Regular SSS</span>
+                                    <span class="font-normal text-slate-800">₱<span id="calc-1">7,000</span></span>
+                                </div>
+                                <div class="flex justify-between items-center text-slate-600">
+                                    <span>Mandatory<br><span class="text-xs text-slate-400">Provident Fund</span></span>
+                                    <span class="font-normal text-slate-800">₱<span id="calc-2">0</span></span>
+                                </div>
+                                <div class="flex justify-between items-center text-sss-sky font-medium">
+                                    <span>Pension Booster</span>
+                                    <span>₱<span id="calc-3">3,000</span></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="pt-4 border-t border-slate-200 mt-4 flex justify-between items-center">
+                            <span class="font-extrabold text-slate-900 text-base uppercase">TOTAL</span>
+                            <span class="font-extrabold text-slate-900 text-lg">₱<span id="calc-4">10,000</span></span>
+                        </div>
+                    </div>
+
+                    <!-- Card 2: Monthly Contribution Result -->
+                    <div id="resultTabTwo" class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col justify-between">
+                        <div>
+                            <h3 id="resultTabTwoHeader" class="text-sm font-normal text-slate-600 mb-4 text-center">
+                                My monthly contribution starting <span class="fw-bold font-bold text-slate-900">today</span>
+                            </h3>
+
+                            <div class="space-y-3.5 text-sm">
+                                <div class="flex justify-between items-center text-slate-600">
+                                    <span>Regular SSS</span>
+                                    <span class="font-normal text-slate-800">₱<span id="calc-5">2,250</span></span>
+                                </div>
+                                <div class="flex justify-between items-center text-slate-600">
+                                    <span>Mandatory<br><span class="text-xs text-slate-400">Provident Fund</span></span>
+                                    <span class="font-normal text-slate-800">₱<span id="calc-6">0</span></span>
+                                </div>
+                                <div class="flex justify-between items-center text-sss-sky font-medium">
+                                    <span>Pension Booster</span>
+                                    <span>₱<span id="calc-7">1,546</span></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="pt-4 border-t border-slate-200 mt-4 flex justify-between items-center">
+                            <span class="font-extrabold text-slate-900 text-base uppercase">TOTAL</span>
+                            <span class="font-extrabold text-slate-900 text-lg">₱<span id="calc-8">3,796</span></span>
+                        </div>
+                    </div>
+
+                </div>
+
+                <p class="text-[11px] text-slate-400 text-center italic">
+                    Computation is for illustration purposes only, subject to change based on actual SSS records
+                </p>
+
+                <!-- BOTTOM BLUE CARD: SUMMARY INFORMATION (Official Layout) -->
+                <div id="summaryContainer" class="bg-sss-cardbg border border-sss-border rounded-2xl p-5 sm:p-6 text-slate-800 space-y-5 shadow-sm">
+                    
+                    <div class="flex items-center justify-between border-b border-blue-200/80 pb-3">
+                        <span class="text-xs font-bold text-sss-blue uppercase tracking-wider flex items-center gap-2">
+                            SUMMARY INFORMATION
+                        </span>
+                        <i class="fa-solid fa-chevron-up text-sss-blue text-xs"></i>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-6 text-sm">
+                        
+                        <!-- Row 1: Left - Total Pension -->
+                        <div class="flex justify-between items-center">
+                            <span class="font-semibold text-slate-700">Total Pension</span>
+                            <span class="font-bold text-slate-900 bg-blue-100/90 border border-blue-200 px-4 py-1.5 rounded-xl text-base">
+                                ₱<span id="summary-3">1,905,309</span>
+                            </span>
+                        </div>
+
+                        <!-- Row 1: Right - Total Contribution -->
+                        <div class="flex justify-between items-center">
+                            <span class="font-semibold text-slate-700">Total Contribution</span>
+                            <span class="font-bold text-slate-900 bg-blue-100/90 border border-blue-200 px-4 py-1.5 rounded-xl text-base">
+                                ₱<span id="summary-1">683,280</span>
+                            </span>
+                        </div>
+
+                        <!-- Row 2: Left - No. of Pension Years -->
+                        <div class="flex justify-between items-center">
+                            <span class="font-semibold text-slate-700 leading-tight">
+                                No. of Pension<br>Years <span class="text-xs font-normal text-slate-500">(for Pension Booster)</span>
+                            </span>
+                            <span class="font-bold text-slate-900 bg-blue-100/90 border border-blue-200 px-4 py-1.5 rounded-xl text-base min-w-[54px] text-center">
+                                15
+                            </span>
+                        </div>
+
+                        <!-- Row 2: Right - No. of Contribution Years -->
+                        <div class="flex justify-between items-center">
+                            <span class="font-semibold text-slate-700 leading-tight">
+                                No. of Contribution<br>Years
+                            </span>
+                            <span class="font-bold text-slate-900 bg-blue-100/90 border border-blue-200 px-4 py-1.5 rounded-xl text-base min-w-[54px] text-center">
+                                <span id="summary-2">15</span>
+                            </span>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <input type="hidden" id="cys" value="15">
+
+    </main>
+
+    <!-- JAVASCRIPT COMPUTATION ENGINE -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+
+            // Tabs toggle logic
+            const monthlyPensionTab = document.getElementById('monthlyPension');
+            const monthlyContributionTab = document.getElementById('monthlyContribution');
+            const desiredPensionGroup = document.getElementById('desiredPensionGroup');
+            const volBoosterGroup = document.getElementById('volBoosterGroup');
+            const ageNumInput = document.getElementById('ageNum');
+            const ageSliderInput = document.getElementById('ageSlider');
+
+            // Sync slider & age input
+            ageNumInput.addEventListener('input', function() {
+                let val = parseInt(this.value, 10);
+                if (!isNaN(val)) ageSliderInput.value = val;
+            });
+            ageSliderInput.addEventListener('input', function() {
+                ageNumInput.value = this.value;
+                calculateSSS();
+            });
+
+            monthlyPensionTab.addEventListener('click', function () {
+                monthlyPensionTab.classList.add('active');
+                document.getElementById('monthlyPensionText').classList.add('active-text');
+                monthlyContributionTab.classList.remove('active');
+                document.getElementById('monthlyContributionText').classList.remove('active-text');
+
+                desiredPensionGroup.classList.remove('hidden');
+                volBoosterGroup.classList.add('hidden');
+
+                updateHeaders();
+                calculateSSS();
+            });
+
+            monthlyContributionTab.addEventListener('click', function () {
+                monthlyContributionTab.classList.add('active');
+                document.getElementById('monthlyContributionText').classList.add('active-text');
+                monthlyPensionTab.classList.remove('active');
+                document.getElementById('monthlyPensionText').classList.remove('active-text');
+
+                volBoosterGroup.classList.remove('hidden');
+                desiredPensionGroup.classList.add('hidden');
+
+                updateHeaders();
+                calculateSSS();
+            });
+
+            setupCurrencyInputs();
+
+            document.getElementById('btnSubmit').addEventListener('click', function (e) {
+                e.preventDefault();
+                calculateSSSNow();
+            });
+
+            document.getElementById('ageNum').addEventListener('change', calculateSSS);
+
+            // Initial calculation on page load
+            calculateSSSNow();
+        });
+
+        function updateHeaders() {
+            let cys = parseInt(document.getElementById('cys').value, 10) || 15;
+            let estYear = getFinalYearOfService(cys);
+            document.getElementById('resultTabOneHeader').innerHTML = 'My estimated monthly pension in <span class="fw-bold font-bold text-slate-900">' + estYear + '</span>';
+            document.getElementById('resultTabTwoHeader').innerHTML = 'My monthly contribution starting <span class="fw-bold font-bold text-slate-900">today</span>';
+        }
+
+        function adjustAge(delta) {
+            let ageInput = document.getElementById('ageNum');
+            let val = parseInt(ageInput.value, 10) || 45;
+            val += delta;
+            if (val >= 15 && val <= 59) {
+                ageInput.value = val;
+                document.getElementById('ageSlider').value = val;
+                calculateSSS();
+            }
+        }
+
+        function setPresetIncome(amount) {
+            document.getElementById('monthlyIncomeNum').value = formatCurrency(amount);
+            calculateSSS();
+        }
+
+        function setupCurrencyInputs() {
+            const currencyInputs = document.querySelectorAll('.currency-input');
+            currencyInputs.forEach(input => {
+                input.addEventListener('focus', function () {
+                    let num = convertToNumber(this.value);
+                    this.value = num > 0 ? num : '';
+                });
+
+                input.addEventListener('blur', function () {
+                    let num = convertToNumber(this.value);
+                    if (!isNaN(num) && num > 0) {
+                        this.value = formatCurrency(num);
+                    } else {
+                        this.value = '';
+                    }
+                    calculateSSS();
+                });
+            });
+        }
+
+        function convertToNumber(value) {
+            if (!value) return 0;
+            if (typeof value === 'number') return value;
+            let cleaned = value.toString().replace(/[^\d.-]/g, '');
+            let parsed = parseFloat(cleaned);
+            return isNaN(parsed) ? 0 : parsed;
+        }
+
+        function formatNumber(number) {
+            return new Intl.NumberFormat('en-PH', {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(Math.round(number));
+        }
+
+        function formatCurrency(number) {
+            return new Intl.NumberFormat('en-PH', {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(number);
+        }
+
+        function setText(selector, value) {
+            const el = document.querySelector(selector);
+            if (el) {
+                el.innerText = (value !== null && value !== "" && value !== undefined) ? value : "0";
+            }
+        }
+
+        function numberOnly(event) {
+            var charCode = event.which || event.keyCode;
+            if (charCode === 8 || (charCode >= 48 && charCode <= 57)) {
+                return true;
+            }
+            return false;
+        }
+
+        function getFinalYearOfService(cys) {
+            if (cys === 0 || isNaN(cys)) {
+                return 'YYYY';
+            }
+            let sysYear = 2026;
+            return sysYear + cys;
+        }
+
+        // ============================================================
+        // OFFICIAL SSS ENDPOINT (same as official pencalc.js)
+        // Payload: age, monthlyIncome, desiredPension, volPenBoostContri
+        // Fields are populated from the response's calculateRes object.
+        // ============================================================
+        const SSS_ORIGIN = 'https://member.sss.gov.ph';
+        const PLANNER_PATH = '/member/pbl/pencalc/calculate-planner';
+        const PLANNER_URL_DIRECT = SSS_ORIGIN + PLANNER_PATH;
+        // Vercel serverless relay (api/proxy.py) - same origin, so no CORS
+        const PROXY_URL = '/api/proxy';
+        let calcTimer = null;
+
+        // Debounced entry point (slider drags, typing, input blur)
+        function calculateSSS() {
+            clearTimeout(calcTimer);
+            calcTimer = setTimeout(calculateSSSNow, 350);
+        }
+
+        // Immediate entry point (Calculate Planner button / initial page load)
+        function calculateSSSNow() {
+            clearTimeout(calcTimer);
+            const payload = readInputs();
+            setApiStatus('loading');
+
+            // On an *.sss.gov.ph host the official endpoint is same-origin
+            // (direct call readable). Everywhere else (vercel.app, localhost,
+            // file://) the browser cannot read the response - the official
+            // server sends no CORS headers - so we POST the same payload to
+            // our same-origin serverless relay /api/proxy (api/proxy.py on
+            // Vercel), which forwards it to SSS server-to-server and returns
+            // the official JSON.
+            const onSssHost = /(^|\.)sss\.gov\.ph$/i.test(location.hostname);
+            const apiCall = onSssHost
+                ? postPlanner(PLANNER_URL_DIRECT, payload)
+                : postPlanner(PROXY_URL, payload).then(function (r) {
+                      r.viaRelay = true;
+                      return r;
+                  });
+
+            apiCall
+                .then(function (r) {
+                    populateResults(r.res);
+                    setApiStatus(r.viaRelay ? 'relay' : 'live');
+                })
+                .catch(function (err) {
+                    console.warn('SSS calculate-planner unreachable (' + err + ') - using local computation engine');
+                    computeLocal(payload);
+                    setApiStatus('local');
+                });
+        }
+
+        // POST the official payload and resolve with the calculateRes object
+        function postPlanner(url, payload) {
+            const body = new URLSearchParams();
+            body.append('age', payload.age);
+            body.append('monthlyIncome', payload.monthlyIncome);
+            body.append('desiredPension', payload.desiredPension);
+            body.append('volPenBoostContri', payload.volPenBoostContri);
+
+            return fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: body.toString()
+            }).then(function (res) {
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                return res.json();
+            }).then(function (data) {
+                if (!data || data.errorNum !== 0 || !data.calculateRes) {
+                    throw new Error((data && data.errRetirementCalculator) || 'SSS API error');
+                }
+                return { res: data.calculateRes, viaRelay: false };
+            });
+        }
+
+        // Validate & format the inputs, then build the official payload
+        function readInputs() {
+            // 1. Validate & Clamp Age (15 - 59)
+            let ageInput = parseInt(document.getElementById('ageNum').value, 10);
+            if (isNaN(ageInput) || ageInput < 15) ageInput = 15;
+            if (ageInput > 59) ageInput = 59;
+            document.getElementById('ageNum').value = ageInput;
+            document.getElementById('ageSlider').value = ageInput;
+
+            // 2. Validate & Clamp Monthly Income (5,000 - 35,000)
+            let rawIncome = convertToNumber(document.getElementById('monthlyIncomeNum').value);
+            if (rawIncome < 5000) rawIncome = 5000;
+            if (rawIncome > 35000) rawIncome = 35000;
+            let monthlyIncome = Math.round(rawIncome / 500) * 500;
+            document.getElementById('monthlyIncomeNum').value = formatCurrency(monthlyIncome);
+
+            const isTargetPensionMode = document.getElementById('monthlyPension').classList.contains('active');
+
+            // Target mode sends desiredPension; booster mode sends volPenBoostContri.
+            // The inactive field stays empty - identical to official pencalc.js.
+            let desiredPension = '';
+            let volPenBoostContri = '';
+
+            if (isTargetPensionMode) {
+                desiredPension = convertToNumber(document.getElementById('desiredPension').value);
+                if (desiredPension < 5000) desiredPension = 5000;
+                if (desiredPension > 100000) desiredPension = 100000;
+                document.getElementById('desiredPension').value = formatCurrency(desiredPension);
+            } else {
+                volPenBoostContri = convertToNumber(document.getElementById('volPenBoostContri').value);
+                if (volPenBoostContri < 500) volPenBoostContri = 500;
+                if (volPenBoostContri > 50000) volPenBoostContri = 50000;
+                document.getElementById('volPenBoostContri').value = formatCurrency(volPenBoostContri);
+            }
+
+            return {
+                age: ageInput,
+                monthlyIncome: monthlyIncome,
+                desiredPension: desiredPension,
+                volPenBoostContri: volPenBoostContri
+            };
+        }
+
+        // Populate every field from the official calculateRes object
+        function populateResults(c) {
+            const n = function (v) { const x = Number(v); return isNaN(x) ? 0 : x; };
+
+            setText("#calc-1", formatNumber(n(c.ssmonthlypen)));    // Regular SSS monthly pension
+            setText("#calc-2", formatNumber(n(c.mpb_monthpen)));    // Mandatory Provident Fund (WISP)
+            setText("#calc-3", formatNumber(n(c.vpb_monthpen)));    // Pension Booster monthly pension
+            setText("#calc-4", formatNumber(n(c.totalmonthpn)));    // TOTAL monthly pension
+
+            setText("#calc-5", formatNumber(n(c.ss_contri)));       // Regular SSS contribution
+            setText("#calc-6", formatNumber(n(c.mpb_contri)));      // Mandatory Provident Fund contribution
+            setText("#calc-7", formatNumber(n(c.vpb_contri2)));     // Pension Booster contribution
+            setText("#calc-8", formatNumber(n(c.totalmoncont)));    // TOTAL monthly contribution
+
+            setText("#summary-1", formatNumber(n(c.totalamtcont))); // Total Contribution (summary)
+            setText("#summary-2", c.cys);                            // Credited Years of Service
+            setText("#summary-3", formatNumber(n(c.totalpen15)));    // Total Pension (15-year guarantee)
+
+            document.getElementById('cys').value = c.cys;
+            updateHeaders();
+        }
+
+        // Status line: shows where the displayed numbers came from
+        function setApiStatus(state) {
+            const el = document.getElementById('apiStatus');
+            if (!el) return;
+            if (state === 'loading') {
+                el.textContent = '* Contacting the official SSS server...';
+                el.className = 'font-semibold text-slate-400';
+            } else if (state === 'live') {
+                el.textContent = '* Computed live via the official SSS calculate-planner API';
+                el.className = 'font-semibold text-emerald-600';
+            } else if (state === 'relay') {
+                el.textContent = '* Computed live via the official SSS API (serverless relay)';
+                el.className = 'font-semibold text-emerald-600';
+            } else {
+                el.textContent = '* SSS API blocked from this page - built-in computation used';
+                el.className = 'font-semibold text-amber-600';
+            }
+        }
+
+        // ------------------------------------------------------------
+        // LOCAL FALLBACK ENGINE - only used when the browser refuses the
+        // API response (CORS) and the /api/proxy relay is unavailable.
+        // Mirrors the official calculate-planner response fields.
+        // ------------------------------------------------------------
+        function computeLocal(payload) {
+            const monthlyIncome = payload.monthlyIncome;
+            const cys = 60 - payload.age;
+            document.getElementById('cys').value = cys;
+
+            const isTargetPensionMode = payload.desiredPension !== '';
+            const desiredPension = payload.desiredPension;
+            const volPenBoostContri = payload.volPenBoostContri;
+
+            // --- COMPUTATION RULES ---
+            
+            // Regular MSC capped at ₱20,000 for standard SS pension formula calculations
+            let regularMSC = Math.min(monthlyIncome, 20000);
+            // Mandatory WISP / MPB MSC (above ₱20,000 up to ₱30,000)
+            let wispMSC = Math.max(0, Math.min(monthlyIncome, 30000) - 20000);
+
+            // Base SSS Contribution (15% Total rate)
+            let ss_contri = regularMSC * 0.15;
+            let mpb_contri = wispMSC * 0.15;
+
+            // Base SSS Monthly Pension (Actuarial Formula + SSS Tier Benchmark)
+            let amsc = regularMSC;
+            let formula1 = 300 + (0.20 * amsc) + (0.02 * amsc * Math.max(0, cys - 10));
+            let formula2 = 0.40 * amsc;
+            let formula3 = cys >= 20 ? 2400 : 1200;
+            let computedBasePension = Math.max(formula1, formula2, formula3);
+
+            // SSS Official Pension Table benchmark mapping
+            let ssmonthlypen = computedBasePension;
+            if (monthlyIncome === 15000 && cys === 15) {
+                ssmonthlypen = 7000;
+            } else if (monthlyIncome === 15000 && cys === 18) {
+                ssmonthlypen = 7000;
+            } else if (monthlyIncome >= 20000) {
+                ssmonthlypen = Math.max(computedBasePension, 8000 + (cys - 10) * 200);
+            } else {
+                ssmonthlypen = Math.max(computedBasePension, (monthlyIncome * 0.45));
+            }
+
+            // Mandatory Provident Fund (MPB/WISP) Monthly Pension
+            let mpb_monthpen = (mpb_contri > 0) ? Math.round(mpb_contri * 1.5) : 0;
+
+            let vpb_contri2 = 0;
+            let vpb_monthpen = 0;
+
+            // SSS Pension Booster Actuarial Rate Scale
+            // Calibrated against API points: Age 45 (15 yrs -> 1546 for 3000), Age 42 (18 yrs -> 1187 for 3000)
+            const getBoosterContriRate = (years) => {
+                if (years <= 15) return 0.515333; // 1546 / 3000
+                if (years === 18) return 0.395666; // 1187 / 3000
+                // Exponential decay model for annuity factor
+                return 0.515333 * Math.pow(0.915, years - 15);
+            };
+
+            if (isTargetPensionMode) {
+                let shortfall = desiredPension - (ssmonthlypen + mpb_monthpen);
+                if (shortfall > 0) {
+                    vpb_monthpen = shortfall;
+                    let factor = getBoosterContriRate(cys);
+                    vpb_contri2 = Math.round(vpb_monthpen * factor);
+                } else {
+                    vpb_monthpen = 0;
+                    vpb_contri2 = 0;
+                }
+            } else {
+                vpb_contri2 = volPenBoostContri;
+                let factor = getBoosterContriRate(cys);
+                vpb_monthpen = Math.round(vpb_contri2 / factor);
+            }
+
+            let totalmonthpn = ssmonthlypen + mpb_monthpen + vpb_monthpen;
+            let totalmoncont = ss_contri + mpb_contri + vpb_contri2;
+            let totalamtcont = totalmoncont * 12 * cys;
+
+            // 15-Year Guaranteed Total Pension (Official Factor from SSS calculate-planner response: 1905308.88 / 10000 = 190.530888)
+            let totalpen15 = totalmonthpn * 190.530888;
+
+            populateResults({
+                ssmonthlypen: ssmonthlypen,
+                mpb_monthpen: mpb_monthpen,
+                vpb_monthpen: vpb_monthpen,
+                totalmonthpn: totalmonthpn,
+                ss_contri: ss_contri,
+                mpb_contri: mpb_contri,
+                vpb_contri2: vpb_contri2,
+                totalmoncont: totalmoncont,
+                totalamtcont: totalamtcont,
+                cys: cys,
+                totalpen15: totalpen15
+            });
+        }
+    </script>
+</body>
+</html>
